@@ -78,6 +78,8 @@ public class PcView extends AppCompatActivity implements AdapterFragmentCallback
     private boolean freezeUpdates, runningPolling, inForeground, completeOnCreateCalled;
     private ComputerDetails.AddressTuple pendingPairingAddress;
     private String pendingPairingPin, pendingPairingPassphrase;
+    private AbsListView listView;
+    private boolean initialFocusSet = false;
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
             final ComputerManagerService.ComputerManagerBinder localBinder =
@@ -880,6 +882,20 @@ public class PcView extends AppCompatActivity implements AdapterFragmentCallback
 
         // Notify the view that the data has changed
         pcGridAdapter.notifyDataSetChanged();
+
+        if (listView != null && !initialFocusSet && pcGridAdapter.getCount() > 0) {
+            listView.post(new Runnable() {
+                @Override
+                public void run() {
+                    // Double check count inside the runnable
+                    if (pcGridAdapter.getCount() > 0) {
+                        listView.setSelection(0);
+                        listView.requestFocus();
+                        initialFocusSet = true;
+                    }
+                }
+            });
+        }
     }
 
     @Override
@@ -889,6 +905,7 @@ public class PcView extends AppCompatActivity implements AdapterFragmentCallback
 
     @Override
     public void receiveAbsListView(AbsListView listView) {
+        this.listView = listView;
         listView.setAdapter(pcGridAdapter);
         listView.setOnItemClickListener(new OnItemClickListener() {
             @Override
